@@ -1,0 +1,27 @@
+Mark 1 of this:
+- Find THE ADDRESS that stores the enemy team ptr
+gTrainerBattleOpponent_A
+- Switch it out with someone else.
+Run script when we hit CB2_InitBattle
+
+/*
+ * A battler may be in one of four positions on the field. The first bit determines
+ * what side the battler is on, either the player's side or the opponent's side.
+ * The second bit determines what flank the battler is on, either the left or right.
+ * Note that the opponent's flanks are drawn corresponding to their perspective, so
+ * their right mon appears on the left, and their left mon appears on the right.
+ * The battler ID is usually the same as the position, except in the case of link battles.
+ *
+ *   + ------------------------- +
+ *   |           Opponent's side |
+ *   |            Right    Left  |
+ *   |              3       1    |
+ *   |                           |
+ *   | Player's side             |
+ *   |  Left   Right             |
+ *   |   0       2               |
+ *   ----------------------------+
+ *   |                           |
+ *   |                           |
+ *   +---------------------------+
+ */
