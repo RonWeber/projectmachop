@@ -1,6 +1,11 @@
 Todo:
-1. Read all data and organize it (Still need another parse for trainer numbers)
-2. Betting app
-3. Cram in Fire Red
+1. Betting app
+2. Tournament Implementation!
 
 Polish:
+
+Squirtle = Blue
+Bulbasaur = Green
+Charmander = Gary
+
+Brendan: Only has Treeko /(ie label says "Mudkip")

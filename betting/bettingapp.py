@@ -5,6 +5,7 @@ from twitchAPI.chat import Chat, EventData, ChatMessage, ChatSub, ChatCommand
 import asyncio
 import os
 import dotenv
+from db import *
 
 dotenv.load_dotenv()
 
@@ -12,6 +13,7 @@ APP_ID = os.getenv('TWITCH_CLIENT_ID')
 APP_SECRET = os.getenv('TWITCH_CLIENT_SECRET')
 USER_SCOPE = [AuthScope.CHAT_READ, AuthScope.CHAT_EDIT]
 TARGET_CHANNEL = 'ProjectMachop'
+CHEAT_ACCOUNTS = ['ProjectMachop', 'Bratmon']  # The accounts that can use the !givemoney command
 
 # Called when the bot successfully starts up
 async def on_ready(ready_event: EventData):
@@ -35,6 +37,28 @@ async def test_command(cmd: ChatCommand):
     else:
         await cmd.reply(f'{cmd.user.name}: {cmd.parameter}')
 
+async def givemoney_command(cmd: ChatCommand):
+    if len(cmd.parameter) == 0:
+        await cmd.reply('You did not specify a username to give money to!')
+    splitCommand = cmd.parameter.split()
+    moneyToGive = 1000  # Default amount to give
+    if len(splitCommand) > 1:
+        try:
+            moneyToGive = int(splitCommand[1])
+        except ValueError:
+            await cmd.reply('The amount of money must be a valid integer.')
+            return
+    if cmd.user.name.lower() in [account.lower() for account in CHEAT_ACCOUNTS]:
+        add_money(splitCommand[0], moneyToGive)
+        await cmd.reply(f'{splitCommand[0]} has been given {moneyToGive} money. They now have {get_user_money(splitCommand[0])} money.')
+    else:
+        await cmd.reply('You do not have permission to use this command.')
+
+async def getbalance_command(cmd: ChatCommand):
+    balance = get_user_money(cmd.user.name)
+    print(f'User {cmd.user.name} has {balance} money.')
+    await cmd.reply(f'You have {balance} money.')
+
 # Setup and run the bot
 async def run():
     # Initialize Twitch API and authenticate
@@ -55,8 +79,13 @@ async def run():
 
     # Register commands
     chat.register_command('reply', test_command)
+    chat.register_command('balance', getbalance_command)
+    chat.register_command('getbalance', getbalance_command)
+    chat.register_command('money', getbalance_command)
+    chat.register_command('givemoney', givemoney_command)
+    chat.register_command('addmoney', givemoney_command)
 
-    # Start the chat bot (Must be awaited!)
+    # Start the chat bot
     chat.start()
 
     # Keep the bot running safely without blocking the async loop
@@ -64,8 +93,6 @@ async def run():
         print("\n>>> Bot is running! Press Ctrl+C in the terminal to stop. <<<\n")
         while True:
             await asyncio.sleep(3600)
-    except KeyboardInterrupt:
-        pass
     finally:
         # Clean up links smoothly
         chat.stop()

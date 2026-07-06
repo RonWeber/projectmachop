@@ -12,8 +12,10 @@ DidSetupChecks = false
 MAP_PATH = BasePath .. "copyin/pokeemerald_modern.map"
 -- US_OVERRIDE = 265 -- Roxanne
 -- THEM_OVERRIDE = 267 -- Wattson
-THEM_OVERRIDE = 271 -- Tate and Liza
-US_OVERRIDE = 272 -- Juan
+FR_FIRST_TRAINER = 855 - 89
+MAX_TRAINERS = 742 + FR_FIRST_TRAINER 
+-- US_OVERRIDE = 1352
+-- THEM_OVERRIDE = 1230 
 
 dofile(LIB_PATH .. "memory.lua")
 
@@ -195,7 +197,6 @@ function OnFrame()
 
     currentTrainerId = emu:read16(gTrainerBattleOpponent_A)
     if currentTrainerId ~= lastTrainerId then
-        MAX_TRAINERS = 855
         currentTrainerId = math.random(1, MAX_TRAINERS) - 1
         if THEM_OVERRIDE then
             currentTrainerId = THEM_OVERRIDE

@@ -1,2 +1,3 @@
 .env
 betting/.env
+__pycache__/
