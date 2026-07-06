@@ -1,3 +1,4 @@
 .env
 betting/.env
 __pycache__/
+*.gba
