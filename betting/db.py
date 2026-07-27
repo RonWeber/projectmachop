@@ -4,7 +4,7 @@ import sqlite3
 INITIAL_MONEY = 5000
 DAILY_BONUS = 1000
 
-dbName = "testbet.db"
+dbName = "betting/testbet.db"
 conn = sqlite3.connect(dbName, check_same_thread=False)  # Allow access from multiple threads
 conn.execute("PRAGMA foreign_keys = ON")  # Enable foreign key support
 conn.execute("PRAGMA journal_mode = WAL")  # Enable Write-Ahead Logging for better concurrency

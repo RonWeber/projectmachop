@@ -1,8 +1,11 @@
 Todo:
-1. Betting app
-2. Tournament Implementation!
+1. Make the tournament update the betting IPC
+2. OBS Stream
+3. Tournament Ending / Championship!
 
 Polish:
+1. Investigate why gym leaders keep getting effortlessly demolished (Is stat total a bad metric?)
+2. Make inputs faster of there have been a crapload of them this battle (strugglelock)
 
 Squirtle = Blue
 Bulbasaur = Green

@@ -116,7 +116,19 @@ def parse_trainer_list(file_content):
     if len(trainers) != 1509:
         print("Warning: Expected 1509 trainers, but found", len(trainers))
     return trainers
-        
+
+
+def AdjustedStatTotal(party):
+    grandTotal = 0.0
+    sorted_party = sorted(party, key=lambda x: x["statTotal"], reverse=True)
+    for i, pkmn in enumerate(sorted_party):
+        if i == 0:
+            grandTotal += pkmn["statTotal"]
+        else:
+            grandTotal += pkmn["statTotal"] * 0.2
+    return grandTotal
+
+
 def CalculateMonStatTotal(speciesList, species, iv, lvl):
     specData = speciesList[species]
     statTotal = 0
@@ -129,6 +141,7 @@ def CalculateMonStatTotal(speciesList, species, iv, lvl):
             valInStat = (((2 * specData[stat] + iv) * lvl) // 100) + 5
         result[stat] = valInStat
         statTotal += valInStat
+    statTotal += (lvl * 3)
     result["statTotal"] = statTotal
     return result
 
@@ -171,13 +184,12 @@ if __name__ == "__main__":
 
     totaled_paries = []
     for pname, party in trainer_parties.items():
-        grandTotal = 0
         newParty = []
         for pkmn in party:
             statTotals = CalculateMonStatTotal(species_data, pkmn["species"], pkmn["iv"], pkmn["lvl"])
             pkmn.update(statTotals)
             newParty.append(pkmn)
-            grandTotal += statTotals["statTotal"]
+        grandTotal = AdjustedStatTotal(newParty)
         if pname not in trainers:
             parties_missing_trainer_info.append(pname)
         else:
@@ -187,6 +199,8 @@ if __name__ == "__main__":
         if trainers[pname]["description"] != "SKIP":
             totaled_paries.append({
                 "name": pname,
+                "character_name": trainers[pname]["character_name"] if pname in trainers else "",
+                "trainer_class": trainers[pname]["class_name"] if pname in trainers else "",
                 "trainer_id": trainers[pname]["id"] if pname in trainers else None,
                 "description": trainers[pname]["description"] if pname in trainers else "",
                 "index": trainers[pname]["index"],

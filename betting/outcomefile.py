@@ -2,8 +2,8 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import json
 
-CURRENT_EVENT_FILE_NAME = "current_event.txt"
-PAST_OUTCOMES_FILE_NAME = "past_outcomes.json"
+CURRENT_EVENT_FILE_NAME = "ipc\\current_event.txt"
+PAST_OUTCOMES_FILE_NAME = "ipc\\past_outcomes.json"
 
 on_files_changed = None
 
@@ -31,7 +31,7 @@ class CurrentEventHandler(FileSystemEventHandler):
 def start_watching():
     event_handler = CurrentEventHandler()
     observer = Observer()
-    observer.schedule(event_handler, path='.', recursive=False)
+    observer.schedule(event_handler, path='ipc', recursive=False)
     observer.start()
     event_handler.on_modified(event=None)  # Trigger the handler once to read the initial state
     return observer

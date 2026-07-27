@@ -10,14 +10,17 @@ LIB_PATH = BasePath .. ""
 EXEC_SUFFEX = ""
 DidSetupChecks = false
 MAP_PATH = BasePath .. "copyin/pokeemerald_modern.map"
+SAVE_STATE_PATH = BasePath .. "savestate.ss0"
 -- US_OVERRIDE = 265 -- Roxanne
 -- THEM_OVERRIDE = 267 -- Wattson
 FR_FIRST_TRAINER = 855 - 89
 MAX_TRAINERS = 742 + FR_FIRST_TRAINER 
 -- US_OVERRIDE = 1352
 -- THEM_OVERRIDE = 1230 
+FRAMES_TO_WAIT_AFTER_BATTLE = 150
 
 dofile(LIB_PATH .. "memory.lua")
+dofile(LIB_PATH .. "tournament.lua")
 
 function FileExists(name)
    local f=io.open(name,"r")
@@ -83,6 +86,7 @@ NEEDED_SYMBOLS = {
     "gR_ShouldChooseMoveItemPoke",
     "gR_ChosenItemId",
     "gR_MoveSelectLock",
+    "gR_BattleOutcome",
 }
 symbol_addresses = get_symbol_addresses(MAP_PATH, NEEDED_SYMBOLS)
 for symbol_name, address in pairs(symbol_addresses) do
@@ -97,6 +101,8 @@ gTrainerIdToCopyIn = symbol_addresses["gTrainerIdToCopyIn"]
 gR_ShouldChooseMoveItemPoke = symbol_addresses["gR_ShouldChooseMoveItemPoke"]
 gR_ChosenItemId = symbol_addresses["gR_ChosenItemId"]
 gR_MoveSelectLock = symbol_addresses["gR_MoveSelectLock"]
+-- 0 = Battle ongoing, 1 = Player won, 2 = Player lost
+gR_BattleOutcome = symbol_addresses["gR_BattleOutcome"]
 
 
 movementPrograms = {
@@ -185,6 +191,14 @@ Reentrant = false
 ReProblemLogged = false
 lastTrainerId = -1
 lastMoveSelectLock = -1
+lastBattleOutcome = 0
+framesAfterBattleEnd = 0
+function ResetState()
+    lastTrainerId = -1
+    lastMoveSelectLock = -1
+    lastBattleOutcome = 0
+    framesAfterBattleEnd = 0
+end
 function OnFrame()
     if Reentrant then
         if not ReProblemLogged then
@@ -197,13 +211,15 @@ function OnFrame()
 
     currentTrainerId = emu:read16(gTrainerBattleOpponent_A)
     if currentTrainerId ~= lastTrainerId then
-        currentTrainerId = math.random(1, MAX_TRAINERS) - 1
+        currentMatchup = CurrentMatchup()
+        console:log("Current matchup:" .. dump(currentMatchup))
+        currentTrainerId = currentMatchup["opponent"]
         if THEM_OVERRIDE then
             currentTrainerId = THEM_OVERRIDE
         end
         emu:write16(gTrainerBattleOpponent_A, currentTrainerId)
         lastTrainerId = currentTrainerId
-        newPlayerTrainerId = math.random(1, MAX_TRAINERS) - 1
+        newPlayerTrainerId = currentMatchup["player"]
         if US_OVERRIDE then
             newPlayerTrainerId = US_OVERRIDE
         end
@@ -213,12 +229,36 @@ function OnFrame()
 
     currentMoveSelectLock = emu:read8(gR_MoveSelectLock)
     if currentMoveSelectLock ~= lastMoveSelectLock then
-        console:log(string.format("MoveSelectLock changed: %d -> %d", lastMoveSelectLock, currentMoveSelectLock))
-        console:log(string.format("ShouldChooseMoveItemPoke: %d", emu:read16(gR_ShouldChooseMoveItemPoke)))
+        -- console:log(string.format("MoveSelectLock changed: %d -> %d", lastMoveSelectLock, currentMoveSelectLock))
+        -- console:log(string.format("ShouldChooseMoveItemPoke: %d", emu:read16(gR_ShouldChooseMoveItemPoke)))
         StartMovementProgram(emu:read8(gR_ShouldChooseMoveItemPoke))
     end
     lastMoveSelectLock = currentMoveSelectLock
     ExecuteMovementIfNeeded(movementProgramState)
+
+
+    currentBattleOutcome = emu:read8(gR_BattleOutcome)
+    if lastBattleOutcome ~= currentBattleOutcome then
+        -- emu:saveStateFile(SAVE_STATE_PATH)
+        if currentBattleOutcome == 1 then
+            console:log("Player won the battle.")
+            EndCurrentMatchup(1)
+        elseif currentBattleOutcome == 2 then
+            console:log("Player lost the battle.")
+            EndCurrentMatchup(2)
+        end
+        lastBattleOutcome = currentBattleOutcome
+    else
+        if currentBattleOutcome ~= 0 then
+            framesAfterBattleEnd = framesAfterBattleEnd + 1
+            if framesAfterBattleEnd >= FRAMES_TO_WAIT_AFTER_BATTLE then
+                -- Reset Everything!
+                emu:loadStateFile(SAVE_STATE_PATH)
+                ResetState()
+                console:log("Resetting state after battle outcome.")
+            end
+        end
+    end
 
     Reentrant = false
 end
