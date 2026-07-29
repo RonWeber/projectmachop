@@ -3,4 +3,4 @@ betting/.env
 __pycache__/
 .gba
 testbet.db
-testbet.db*
+*testbet.db*

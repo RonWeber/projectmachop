@@ -212,7 +212,6 @@ function OnFrame()
     currentTrainerId = emu:read16(gTrainerBattleOpponent_A)
     if currentTrainerId ~= lastTrainerId then
         currentMatchup = CurrentMatchup()
-        console:log("Current matchup:" .. dump(currentMatchup))
         currentTrainerId = currentMatchup["opponent"]
         if THEM_OVERRIDE then
             currentTrainerId = THEM_OVERRIDE

@@ -121,11 +121,24 @@ def parse_trainer_list(file_content):
 def AdjustedStatTotal(party):
     grandTotal = 0.0
     sorted_party = sorted(party, key=lambda x: x["statTotal"], reverse=True)
+    ace_level = sorted_party[0]["lvl"] if sorted_party else 0
     for i, pkmn in enumerate(sorted_party):
         if i == 0:
-            grandTotal += pkmn["statTotal"]
+            factor = 1.0
+        elif i == 1:
+            factor = 0.25
+        elif i == 2:
+            factor = 0.1
         else:
-            grandTotal += pkmn["statTotal"] * 0.2
+            factor = 0.05
+        if pkmn["lvl"] + 2 < ace_level:
+            factor *= 0.5
+        if pkmn["lvl"] + 4 < ace_level:
+            factor *= 0.5
+        if pkmn["lvl"] + 6 < ace_level:
+            factor *= 0.1
+        grandTotal += pkmn["statTotal"] * factor
+
     return grandTotal
 
 
@@ -139,9 +152,12 @@ def CalculateMonStatTotal(speciesList, species, iv, lvl):
             valInStat = ((n * lvl) // 100) + lvl + 10
         else:
             valInStat = (((2 * specData[stat] + iv) * lvl) // 100) + 5
+        if stat == "Speed":
+            # We care less about speed
+            valInStat /= 2
         result[stat] = valInStat
         statTotal += valInStat
-    statTotal += (lvl * 3)
+    statTotal += (lvl * 75)
     result["statTotal"] = statTotal
     return result
 
@@ -209,6 +225,11 @@ if __name__ == "__main__":
     
     totaled_paries.sort(key=lambda x: x["grandTotal"])
 
+    index_in_this_list = 0
+    for party in totaled_paries:
+        party["index_in_this_list"] = index_in_this_list
+        index_in_this_list += 1
+
     for tparty, trainer in trainers.items():
         class_name = trainer["class_name"] + " " + trainer["character_name"] + " " + trainer["description"]
         if class_name_desc_counts[class_name] > 1:
@@ -222,6 +243,8 @@ if __name__ == "__main__":
     print("Problematic Trainers: ", len(problematic_trainers))
 
     problematic_trainers.sort(key=lambda x: x["character_name"])
+
+    print("Final number of Trainers: ", len(totaled_paries))
 
     # Pretty print the resulting dictionary map
     with open(OUT_JSON_FILEPATH, 'w') as f:

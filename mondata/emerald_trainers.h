@@ -10390,7 +10390,7 @@ const struct Trainer gTrainers[] = {
 
     [TRAINER_JUAN_3] =
     {
-        // Description: "Second Rematch"
+        // Description: "SKIP"
         .trainerClass = TRAINER_CLASS_LEADER,
         .encounterMusic_gender = TRAINER_ENCOUNTER_MUSIC_MALE,
         .trainerPic = TRAINER_PIC_LEADER_JUAN,

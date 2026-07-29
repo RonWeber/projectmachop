@@ -4,7 +4,7 @@ PAST_OUTCOMES_FILE = BasePath .. "ipc/past_outcomes.json"
 
 MON_DATA_FILE = BasePath .. "mondata/out_json.json"
 Mondata = {}
-CHEAT_OFFSET = 500
+CHEAT_OFFSET = 119
 
 local monDataFile = io.open(MON_DATA_FILE, "r")
 if monDataFile then
@@ -33,8 +33,10 @@ ReadPastOutcomes()
 
 
 function CurrentMatchup()
-    local player = Mondata[1]["index"]
-    local opponent = Mondata[2]["index"]
+    local playerIndexInROM = Mondata[1]["index"]
+    local opponentIndexInROM = Mondata[2]["index"]
+    local playerIndexInList = 1
+    local opponentIndexInList = 2
     local pastOutcomeIndex = 1
     local cheatOffset = CHEAT_OFFSET or 0
     -- console:log("Past outcomes: " .. dump(PastOutcomes))
@@ -43,21 +45,28 @@ function CurrentMatchup()
         if outcome == 1 then
             -- console:log("Player won against opponent at index " .. pastOutcomeIndex .. ". Moving to next opponent.")
             -- Player won. Move on to the next opponent.
-            opponent = Mondata[2 + pastOutcomeIndex + cheatOffset]["index"]
+            opponentIndexInList = 2 + pastOutcomeIndex + cheatOffset
+            opponentIndexInROM = Mondata[opponentIndexInList]["index"]
         elseif outcome == 2 then
             -- console:log("Player lost against opponent at index " .. pastOutcomeIndex .. ". Switching player and opponent.")
             -- Player lost. Opponent becomes the next player, and the next opponent is chosen.
-            player = opponent
-            opponent = Mondata[2 + pastOutcomeIndex + cheatOffset]["index"]
+            playerIndexInROM = opponentIndexInROM
+            playerIndexInList = opponentIndexInList
+            opponentIndexInList = 2 + pastOutcomeIndex + cheatOffset
+            opponentIndexInROM = Mondata[opponentIndexInList]["index"]
         else
             console:log("Invalid outcome value: " .. tostring(outcome) .. ". Expected 1 (win) or 2 (loss).")
         end
 
         pastOutcomeIndex = pastOutcomeIndex + 1
     end
+    playerName = Mondata[playerIndexInList]["trainer_class"] .. " " .. Mondata[playerIndexInList]["character_name"]
+    opponentName = Mondata[opponentIndexInList]["trainer_class"] .. " " .. Mondata[opponentIndexInList]["character_name"]
+    console:log(string.format("Battle %d", pastOutcomeIndex))
+    console:log(string.format("Current matchup: Player: %s (Index in ROM: %d) vs Opponent: %s (Index in ROM: %d)", playerName, playerIndexInROM, opponentName, opponentIndexInROM))
     return {
-        player = player,
-        opponent = opponent,
+        player = playerIndexInROM,
+        opponent = opponentIndexInROM,
         index = pastOutcomeIndex
     }
 end
