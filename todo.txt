@@ -9,7 +9,6 @@ Todo:
 
 Polish:
 1. Make strugglelock timer reset when a pokemon faints
-2. Make RNG not give the same field every reset
 
 Squirtle = Blue
 Bulbasaur = Green

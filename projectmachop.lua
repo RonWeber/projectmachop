@@ -10,6 +10,7 @@ LIB_PATH = BasePath .. ""
 EXEC_SUFFEX = ""
 DidSetupChecks = false
 MAP_PATH = BasePath .. "copyin/pokeemerald_modern.map"
+BETTING_PATH = BasePath .. "ipc/current_event.txt"
 SAVE_STATE_PATH = BasePath .. "savestate.ss0"
 -- US_OVERRIDE = 265 -- Roxanne
 -- THEM_OVERRIDE = 267 -- Wattson
@@ -107,7 +108,22 @@ gR_MoveSelectLock = symbol_addresses["gR_MoveSelectLock"]
 gR_BattleOutcome = symbol_addresses["gR_BattleOutcome"]
 gRngValue = symbol_addresses["gRngValue"]
 
+betIsRunning = false
+function WriteBettingFile(toWrite)
+    console:log("Writing to betting file: " .. toWrite)
+    local file = io.open(BETTING_PATH, "w")
+    if file then
+        file:write(toWrite)
+        file:close()
+    else
+        console:log("Error: Could not open betting file for writing. Check the path.")
+    end
+end
 
+
+-- We'll just say 1-3 = Move, item, poke, 4-7 is the move, 8-11 is the item, and 12-17 is the Pokemon
+-- 18 is "Mash A, we're at a YES/NO we don't expect"
+-- 19 is "We don't have a valid item, panic (And maybe bail out of the item menu)"
 movementPrograms = {
     [0] = "",
     [1] = "a",
@@ -246,15 +262,19 @@ function OnFrame()
         -- console:log(string.format("ShouldChooseMoveItemPoke: %d", emu:read16(gR_ShouldChooseMoveItemPoke)))
         completeInputsSinceBattleEnd = completeInputsSinceBattleEnd + 1
         if completeInputsSinceBattleEnd >= MAX_INPUTS_UNTIL_SPEEDUP then
-            console:log(string.format("Complete inputs since battle end: %d", completeInputsSinceBattleEnd))
+            -- console:log(string.format("Complete inputs since battle end: %d", completeInputsSinceBattleEnd))
             console:log("Speeding up movement sub-programs due to too many inputs since battle end.")
             movementSubPrograms = STRUGGLEBUS_MOVEMENT_SUB_PROGRAMS
         end
         StartMovementProgram(emu:read8(gR_ShouldChooseMoveItemPoke))
+        if lastMoveSelectLock > 0 and currentMoveSelectLock > 0 and betIsRunning then
+            console:log("First move was made - stop bets!")
+            WriteBettingFile("")
+            betIsRunning = false
+        end
     end
     lastMoveSelectLock = currentMoveSelectLock
     ExecuteMovementIfNeeded(movementProgramState)
-
 
     currentBattleOutcome = emu:read8(gR_BattleOutcome)
     if lastBattleOutcome ~= currentBattleOutcome then
@@ -266,6 +286,10 @@ function OnFrame()
             console:log("Player lost the battle.")
             EndCurrentMatchup(2)
         end
+        -- Start the next bet right away
+        newCurrentMatchup = CurrentMatchup()
+        WriteBettingFile(newCurrentMatchup["index"])
+        betIsRunning = true
         lastBattleOutcome = currentBattleOutcome
     else
         if currentBattleOutcome ~= 0 then
