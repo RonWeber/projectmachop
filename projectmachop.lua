@@ -212,6 +212,20 @@ function ExecuteMovementIfNeeded(mps)
     end
 end
 
+function shouldStopBets(lastMoveSelectLock, currentMoveSelectLock, moveChoice, betIsRunning)
+    if lastMoveSelectLock <= 0 then
+        return false
+    elseif currentMoveSelectLock <= 0 then
+        return false
+    elseif not betIsRunning then
+        return false
+    elseif moveChoice < 4 or moveChoice > 7 then
+        return false
+    else
+        return true
+    end
+end
+
 Reentrant = false
 ReProblemLogged = false
 lastTrainerId = -1
@@ -266,8 +280,9 @@ function OnFrame()
             console:log("Speeding up movement sub-programs due to too many inputs since battle end.")
             movementSubPrograms = STRUGGLEBUS_MOVEMENT_SUB_PROGRAMS
         end
-        StartMovementProgram(emu:read8(gR_ShouldChooseMoveItemPoke))
-        if lastMoveSelectLock > 0 and currentMoveSelectLock > 0 and betIsRunning then
+        moveChoice = emu:read8(gR_ShouldChooseMoveItemPoke)
+        StartMovementProgram(moveChoice)
+        if shouldStopBets(lastMoveSelectLock, currentMoveSelectLock, moveChoice, betIsRunning) then
             console:log("First move was made - stop bets!")
             WriteBettingFile("")
             betIsRunning = false

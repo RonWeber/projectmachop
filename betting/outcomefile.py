@@ -14,6 +14,8 @@ def set_on_files_changed_callback(callback):
 
 class CurrentEventHandler(FileSystemEventHandler):
     def on_modified(self, event=None):
+        if event and event.src_path != CURRENT_EVENT_FILE_NAME:
+            return  # Ignore events that are not for the current event file
         try:
             with open(CURRENT_EVENT_FILE_NAME, 'r') as f:
                 current_event_content = f.read()

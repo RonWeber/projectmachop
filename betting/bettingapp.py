@@ -117,7 +117,7 @@ async def bet_command(cmd: ChatCommand):
         else:
             raise InvalidInputError("Invalid outcome. Must be 'player' or 'opponent'.")
         if get_event_id() is None:
-            await cmd.reply('No active event to place a bet on.')
+            await cmd.reply('Cannot place a bet because the battle is ongoing.')
             return
         result = place_bet(cmd.user.name, money, get_event_id(), outcome)
         print(f'User {cmd.user.name} placed a bet of {result["money_bet"]} money on {splitCommand[0]}.')
@@ -155,6 +155,8 @@ def on_files_changed(current_event_content, past_outcomes_content):
         set_event_id(new_event_id)
         print(f"Event ID updated to: {file_content}")
         handle_past_outcomes(past_outcomes_content["outcomes"])  # Call the function to handle past outcomes
+        if new_event_id is not None:
+            global_chat_function(f'New event started! Event ID: {new_event_id}. Place your bets with "!bet player <amount>" or "!bet opponent <amount>".')
 
 def handle_past_outcomes(past_outcomes_content):
     for event in events_with_bets():

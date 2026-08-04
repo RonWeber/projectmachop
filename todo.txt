@@ -1,14 +1,14 @@
 Todo:
-1. Make the tournament update the betting IPC
-2. OBS Information about current battle, current player's winstreak, and upcoming opponents
-3. OBS Information about how to bet and top bets
-4. OBS inter-battle screen
-5. Tournament Ending / Championship!
-6. Put in best win streak
-7. Avatar for the Twitch Channel
+1. OBS Information about current battle, current player's winstreak, and upcoming opponents
+2. OBS Information about how to bet and top bets
+3. OBS inter-battle screen
+4. Tournament Ending / Championship!
+5. Put in best win streak
+6. Avatar for the Twitch Channel
 
 Polish:
 1. Make strugglelock timer reset when a pokemon faints
+2. Make the betting bot use the Pokemon Trainer names
 
 Squirtle = Blue
 Bulbasaur = Green
