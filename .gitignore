@@ -4,3 +4,4 @@ __pycache__/
 .gba
 testbet.db
 *testbet.db*
+twitch_user_token.json
