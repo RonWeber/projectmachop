@@ -1,0 +1,6 @@
+1. Start MGBA
+2. MGBA size at 6x
+3. Start OBS
+4. Start Betting Script
+5. Go live
+6. Turn on MGBA script

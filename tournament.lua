@@ -4,7 +4,7 @@ PAST_OUTCOMES_FILE = BasePath .. "ipc/past_outcomes.json"
 
 MON_DATA_FILE = BasePath .. "mondata/out_json.json"
 Mondata = {}
-CHEAT_OFFSET = 119
+CHEAT_OFFSET = 0
 
 local monDataFile = io.open(MON_DATA_FILE, "r")
 if monDataFile then

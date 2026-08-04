@@ -17,7 +17,8 @@ FR_FIRST_TRAINER = 855 - 89
 MAX_TRAINERS = 742 + FR_FIRST_TRAINER 
 -- US_OVERRIDE = 1352
 -- THEM_OVERRIDE = 1230 
-FRAMES_TO_WAIT_AFTER_BATTLE = 150
+FRAMES_TO_WAIT_AFTER_BATTLE = 100
+MAX_INPUTS_UNTIL_SPEEDUP = 200
 
 dofile(LIB_PATH .. "memory.lua")
 dofile(LIB_PATH .. "tournament.lua")
@@ -87,6 +88,7 @@ NEEDED_SYMBOLS = {
     "gR_ChosenItemId",
     "gR_MoveSelectLock",
     "gR_BattleOutcome",
+    "gRngValue"
 }
 symbol_addresses = get_symbol_addresses(MAP_PATH, NEEDED_SYMBOLS)
 for symbol_name, address in pairs(symbol_addresses) do
@@ -103,6 +105,7 @@ gR_ChosenItemId = symbol_addresses["gR_ChosenItemId"]
 gR_MoveSelectLock = symbol_addresses["gR_MoveSelectLock"]
 -- 0 = Battle ongoing, 1 = Player won, 2 = Player lost
 gR_BattleOutcome = symbol_addresses["gR_BattleOutcome"]
+gRngValue = symbol_addresses["gRngValue"]
 
 
 movementPrograms = {
@@ -121,11 +124,17 @@ movementPrograms = {
     [18] = "a",
     [19] = "bla",
 }
-movementSubPrograms = {
-    {time = 45, btnDown = false},
+DEFAULT_MOVEMENT_SUB_PROGRAMS = {
+    {time = 42, btnDown = false},
     {time = 10, btnDown = true},
     {time = 1, btnDown = false},
 }
+STRUGGLEBUS_MOVEMENT_SUB_PROGRAMS = {
+    {time = 2, btnDown = false},
+    {time = 10, btnDown = true},
+    {time = 1, btnDown = false},
+}
+movementSubPrograms = DEFAULT_MOVEMENT_SUB_PROGRAMS
 
 movementProgramState = {
     currentProgramId = 0,
@@ -193,11 +202,16 @@ lastTrainerId = -1
 lastMoveSelectLock = -1
 lastBattleOutcome = 0
 framesAfterBattleEnd = 0
+completeInputsSinceBattleEnd = 0
+lastRngValue = 0
 function ResetState()
     lastTrainerId = -1
     lastMoveSelectLock = -1
     lastBattleOutcome = 0
     framesAfterBattleEnd = 0
+    completeInputsSinceBattleEnd = 0
+    lastRngValue = 0
+    movementSubPrograms = DEFAULT_MOVEMENT_SUB_PROGRAMS
 end
 function OnFrame()
     if Reentrant then
@@ -230,6 +244,12 @@ function OnFrame()
     if currentMoveSelectLock ~= lastMoveSelectLock then
         -- console:log(string.format("MoveSelectLock changed: %d -> %d", lastMoveSelectLock, currentMoveSelectLock))
         -- console:log(string.format("ShouldChooseMoveItemPoke: %d", emu:read16(gR_ShouldChooseMoveItemPoke)))
+        completeInputsSinceBattleEnd = completeInputsSinceBattleEnd + 1
+        if completeInputsSinceBattleEnd >= MAX_INPUTS_UNTIL_SPEEDUP then
+            console:log(string.format("Complete inputs since battle end: %d", completeInputsSinceBattleEnd))
+            console:log("Speeding up movement sub-programs due to too many inputs since battle end.")
+            movementSubPrograms = STRUGGLEBUS_MOVEMENT_SUB_PROGRAMS
+        end
         StartMovementProgram(emu:read8(gR_ShouldChooseMoveItemPoke))
     end
     lastMoveSelectLock = currentMoveSelectLock
@@ -253,6 +273,9 @@ function OnFrame()
             if framesAfterBattleEnd >= FRAMES_TO_WAIT_AFTER_BATTLE then
                 -- Reset Everything!
                 emu:loadStateFile(SAVE_STATE_PATH)
+                -- New random number so that we have a different battlefield next time (Yes, it's only for that)
+                local newRng = math.random(0, 0xFFFFFFFF)
+                emu:write32(gRngValue, newRng)
                 ResetState()
                 console:log("Resetting state after battle outcome.")
             end

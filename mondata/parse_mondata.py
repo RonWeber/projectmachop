@@ -126,16 +126,16 @@ def AdjustedStatTotal(party):
         if i == 0:
             factor = 1.0
         elif i == 1:
-            factor = 0.25
+            factor = 0.15
         elif i == 2:
             factor = 0.1
         else:
-            factor = 0.05
-        if pkmn["lvl"] + 2 < ace_level:
+            factor = 0.1
+        if pkmn["lvl"] + 2 <= ace_level:
             factor *= 0.5
-        if pkmn["lvl"] + 4 < ace_level:
-            factor *= 0.5
-        if pkmn["lvl"] + 6 < ace_level:
+        if pkmn["lvl"] + 4 <= ace_level:
+            factor *= 0.25
+        if pkmn["lvl"] + 6 <= ace_level:
             factor *= 0.1
         grandTotal += pkmn["statTotal"] * factor
 
@@ -146,18 +146,26 @@ def CalculateMonStatTotal(speciesList, species, iv, lvl):
     specData = speciesList[species]
     statTotal = 0
     result = {}
+    attack = (((2 * specData["Attack"] + iv) * lvl) // 100) + 5
+    specialAttack = (((2 * specData["SpAttack"] + iv) * lvl) // 100) + 5
+    specialIsHigher = specialAttack > attack
     for stat in STATS:
         if stat == "HP":
-            n = 2 * specData[stat] + iv;
+            n = 2 * specData[stat] + iv
             valInStat = ((n * lvl) // 100) + lvl + 10
         else:
             valInStat = (((2 * specData[stat] + iv) * lvl) // 100) + 5
         if stat == "Speed":
             # We care less about speed
             valInStat /= 2
+        # We do not give one crap about the wrong attacking stat.
+        if stat == "Attack" and specialIsHigher:
+            valInStat *= 0.05
+        if stat == "SpAttack" and not specialIsHigher:
+            valInStat *= 0.05
         result[stat] = valInStat
         statTotal += valInStat
-    statTotal += (lvl * 75)
+    statTotal += (lvl * 60)
     result["statTotal"] = statTotal
     return result
 

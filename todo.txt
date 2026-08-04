@@ -1,11 +1,15 @@
 Todo:
 1. Make the tournament update the betting IPC
-2. OBS Stream
-3. Tournament Ending / Championship!
+2. OBS Information about current battle, current player's winstreak, and upcoming opponents
+3. OBS Information about how to bet and top bets
+4. OBS inter-battle screen
+5. Tournament Ending / Championship!
+6. Put in best win streak
+7. Avatar for the Twitch Channel
 
 Polish:
-1. Investigate why gym leaders keep getting effortlessly demolished (Is stat total a bad metric?)
-2. Make inputs faster of there have been a crapload of them this battle (strugglelock)
+1. Make strugglelock timer reset when a pokemon faints
+2. Make RNG not give the same field every reset
 
 Squirtle = Blue
 Bulbasaur = Green
