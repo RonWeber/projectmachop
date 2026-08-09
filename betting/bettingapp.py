@@ -7,8 +7,9 @@ import os
 import dotenv
 import json
 import threading
-from db import *
-from outcomefile import start_watching, set_on_files_changed_callback
+from betting.db import *
+from betting.outcomefile import start_watching, add_on_files_changed_callback
+from tournament_py.tournament import TrainerFullName
 
 
 dotenv.load_dotenv()
@@ -23,6 +24,9 @@ TOKEN_PATH = os.getenv('TWITCH_TOKEN_PATH', 'twitch_user_token.json')
 event_id = None
 event_id_lock = threading.Lock()
 
+current_player_name = "Player"
+current_opponent_name = "Opponent"
+
 global_chat_function = lambda msg: None  # Placeholder for the global chat function
 
 def get_event_id():
@@ -30,10 +34,13 @@ def get_event_id():
     with event_id_lock:
         return event_id
     
-def set_event_id(new_event_id):
-    global event_id
+def set_global_data(new_event_id, new_player_name, new_opponent_name):
+    global event_id, current_player_name, current_opponent_name
     with event_id_lock:
         event_id = new_event_id
+        current_player_name = new_player_name
+        current_opponent_name = new_opponent_name
+        
 
 # Called when the bot successfully starts up
 async def on_ready(ready_event: EventData):
@@ -110,20 +117,25 @@ async def bet_command(cmd: ChatCommand):
             except ValueError:
                 raise InvalidInputError("The amount of money must be a valid integer.")
         outcome = 0
+        whoYouBetOn = splitCommand[0].lower()
         if splitCommand[0].lower() == "player":
             outcome = 1
+            global current_player_name
+            whoYouBetOn = current_player_name
         elif splitCommand[0].lower() == "opponent":
             outcome = 2
+            global current_opponent_name
+            whoYouBetOn = current_opponent_name
         else:
             raise InvalidInputError("Invalid outcome. Must be 'player' or 'opponent'.")
         if get_event_id() is None:
             await cmd.reply('Cannot place a bet because the battle is ongoing.')
             return
         result = place_bet(cmd.user.name, money, get_event_id(), outcome)
-        print(f'User {cmd.user.name} placed a bet of {result["money_bet"]} money on {splitCommand[0]}.')
+        print(f'User {cmd.user.name} placed a bet of {result["money_bet"]} money on {whoYouBetOn}.')
         if result["all_in"]:
             await cmd.reply('You went ALL IN!')
-        await cmd.reply(f'You have placed a bet of {result["money_bet"]} money on {splitCommand[0]}.')
+        await cmd.reply(f'You have placed a bet of {result["money_bet"]} money on {whoYouBetOn}.')
     except InvalidInputError as e:
         await cmd.reply('Bet with either "!bet player <amount>" or "!bet opponent <amount>"')
         return
@@ -145,27 +157,31 @@ async def cancelevent_command(cmd: ChatCommand):
         except ValueError:
             await cmd.reply('The event ID must be a valid integer.')
 
-def on_files_changed(current_event_content, past_outcomes_content):
+def on_files_changed(current_event_content, tournament_data):
     current_event_id = get_event_id()
     file_content = current_event_content.strip()
     print(f"Detected change in current_event.txt: {file_content}")
     new_event_id = int(file_content) if file_content else None
     print(f"Current event ID: {current_event_id}, New event ID: {new_event_id}")
     if new_event_id != current_event_id:
-        set_event_id(new_event_id)
+        next_player_name = TrainerFullName(tournament_data.current_player_json)
+        next_opponent_name = TrainerFullName(tournament_data.current_opponent_json)
+        set_global_data(new_event_id, next_player_name, next_opponent_name)
         print(f"Event ID updated to: {file_content}")
-        handle_past_outcomes(past_outcomes_content["outcomes"])  # Call the function to handle past outcomes
+        handle_past_outcomes(tournament_data)  # Call the function to handle past outcomes
         if new_event_id is not None:
-            global_chat_function(f'New event started! Event ID: {new_event_id}. Place your bets with "!bet player <amount>" or "!bet opponent <amount>".')
+            global_chat_function(f'New prediction started! {next_player_name} vs {next_opponent_name}! Place your bets with "!bet player <amount>" or "!bet opponent <amount>".')
 
-def handle_past_outcomes(past_outcomes_content):
+def handle_past_outcomes(tournament_data):
     for event in events_with_bets():
-        if str(event) in past_outcomes_content:
-            winning_outcome = past_outcomes_content[str(event)]
+        if int(event) in tournament_data.outcomes_per_event:
+            winning_outcome = tournament_data.outcomes_per_event[event]
             result = payout_bets(event, winning_outcome)
             print(f"Payouts processed for event {event} with winning outcome {winning_outcome}.")
-            winning_outcome_str = "player" if winning_outcome == 1 else "opponent"
-            global_chat_function(f'Event {event} has concluded! The winning outcome is {winning_outcome_str}. A grand total of {result["Total"]} has been distributed.')
+            winning_trainer_name = TrainerFullName(tournament_data.last_winner_json)
+            losing_trainer_name = TrainerFullName(tournament_data.last_loser_json)
+            global_chat_function(f'Battle {event} has concluded! The winner is {winning_trainer_name}, who defeated {losing_trainer_name}!')
+            global_chat_function(f'A grand total of {result["Total"]} has been distributed.')
         else:
             print(f"No outcome found for event {event} in past outcomes.")
 
@@ -228,8 +244,11 @@ async def run():
         await twitch.close()
         print("Bot has been shut down.")
 
-# Run the async loop
-if __name__ == '__main__':
-    set_on_files_changed_callback(on_files_changed)
+def InitializeAndRun():
+    add_on_files_changed_callback(on_files_changed)
     start_watching()
     asyncio.run(run())
+
+# Run the async loop
+if __name__ == '__main__':
+    InitializeAndRun()

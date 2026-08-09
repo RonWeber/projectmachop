@@ -226,6 +226,12 @@ function shouldStopBets(lastMoveSelectLock, currentMoveSelectLock, moveChoice, b
     end
 end
 
+function randSeed(eventNum) 
+     return 0x12345678 ~ eventNum
+end
+
+
+
 Reentrant = false
 ReProblemLogged = false
 lastTrainerId = -1
@@ -233,14 +239,12 @@ lastMoveSelectLock = -1
 lastBattleOutcome = 0
 framesAfterBattleEnd = 0
 completeInputsSinceBattleEnd = 0
-lastRngValue = 0
 function ResetState()
     lastTrainerId = -1
     lastMoveSelectLock = -1
     lastBattleOutcome = 0
     framesAfterBattleEnd = 0
     completeInputsSinceBattleEnd = 0
-    lastRngValue = 0
     movementSubPrograms = DEFAULT_MOVEMENT_SUB_PROGRAMS
 end
 function OnFrame()
@@ -313,8 +317,8 @@ function OnFrame()
                 -- Reset Everything!
                 emu:loadStateFile(SAVE_STATE_PATH)
                 -- New random number so that we have a different battlefield next time (Yes, it's only for that)
-                local newRng = math.random(0, 0xFFFFFFFF)
-                emu:write32(gRngValue, newRng)
+                currentMatchup = CurrentMatchup()
+                emu:write32(gRngValue, randSeed(currentMatchup["index"]))
                 ResetState()
                 console:log("Resetting state after battle outcome.")
             end

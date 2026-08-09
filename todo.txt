@@ -1,17 +1,15 @@
 Todo:
-1. OBS Information about current battle, current player's winstreak, and upcoming opponents
-2. OBS Information about how to bet and top bets
-3. OBS inter-battle screen
-4. Tournament Ending / Championship!
-5. Put in best win streak
+1. OBS Tournament Information (Main Screen)
+2. OBS Betting information
+3. Control scene transitions 
+4. Add information to the other screens
+5. Tournament Ending / Championship!
 6. Avatar for the Twitch Channel
+7. Ask about how to promote it
 
 Polish:
 1. Make strugglelock timer reset when a pokemon faints
-2. Make the betting bot use the Pokemon Trainer names
+2. !betp and !beto
+3. !bet <trainer>
+4. Make the savestate happen in Norman's Gym
 
-Squirtle = Blue
-Bulbasaur = Green
-Charmander = Gary
-
-Brendan: Only has Treeko /(ie label says "Mudkip")

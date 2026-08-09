@@ -83,12 +83,14 @@ def parse_trainer_list(file_content):
     trainers = {}
     description_pattern = r"// Description:\s*\"(.*?)\""
     trainer_class_pattern = r"trainerClass\s*=\s*(\w*),"
+    trainer_pic_pattern = r"trainerPic\s*=\s*TRAINER_PIC_(\w*),"
     trainer_name_pattern = r"trainerName\s*=\s*_\(\"(.*?)\"\),"
     party_pattern = r"party\s*=\s*\w*\((\w*)\),"
     trainer_pattern = re.compile(
         r"\[(\w+)\]\s+=\s*\{.*?" + 
         description_pattern + ".*?" +
         trainer_class_pattern + ".*?" +
+        trainer_pic_pattern + ".*?" +
         trainer_name_pattern + ".*?" +
         party_pattern +
         r"\s*\},", re.DOTALL
@@ -97,16 +99,18 @@ def parse_trainer_list(file_content):
     i = 0
     for match in trainer_pattern.finditer(file_content):
         # print(match.group(0))
-        print(i, i - 855 + 89, match.group(1), match.group(2), match.group(3), match.group(4), match.group(5))
+        print(i, i - 855 + 89, match.group(1), match.group(2), match.group(3), match.group(4), match.group(5), match.group(6))
         unique_name = match.group(1)
         description = match.group(2)
         class_name = match.group(3)
-        character_name = match.group(4)
-        party_id = match.group(5)
+        trainer_pic = match.group(4)
+        character_name = match.group(5)
+        party_id = match.group(6)
         trainers[party_id] = {
             "id": unique_name,
             "description": description,
             "class_name": class_name,
+            "trainer_pic": trainer_pic,
             "character_name": character_name,
             "party_id": party_id,
             "index": i,
@@ -227,6 +231,7 @@ if __name__ == "__main__":
                 "trainer_class": trainers[pname]["class_name"] if pname in trainers else "",
                 "trainer_id": trainers[pname]["id"] if pname in trainers else None,
                 "description": trainers[pname]["description"] if pname in trainers else "",
+                "trainer_pic": trainers[pname]["trainer_pic"] if pname in trainers else "",
                 "index": trainers[pname]["index"],
                 "grandTotal": grandTotal,
                 "party": newParty})

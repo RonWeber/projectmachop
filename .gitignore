@@ -5,3 +5,4 @@ __pycache__/
 testbet.db
 *testbet.db*
 twitch_user_token.json
+sprites/

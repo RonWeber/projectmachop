@@ -2,15 +2,16 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import json
 
+from tournament_py.tournament import ParseTournamentData
+
 CURRENT_EVENT_FILE_NAME = "ipc\\current_event.txt"
 PAST_OUTCOMES_FILE_NAME = "ipc\\past_outcomes.json"
 
-on_files_changed = None
+on_files_changed = []
 
-def set_on_files_changed_callback(callback):
+def add_on_files_changed_callback(callback):
     global on_files_changed
-    on_files_changed = callback
-
+    on_files_changed.append(callback)
 
 class CurrentEventHandler(FileSystemEventHandler):
     def on_modified(self, event=None):
@@ -22,9 +23,11 @@ class CurrentEventHandler(FileSystemEventHandler):
             
             with open(PAST_OUTCOMES_FILE_NAME, 'r') as f:
                 past_outcomes_content = json.load(f)
+                tournament_data = ParseTournamentData(past_outcomes_content)
             
             if on_files_changed:
-                on_files_changed(current_event_content, past_outcomes_content)
+                for callback in on_files_changed:
+                    callback(current_event_content, tournament_data)
         except Exception as e:
             print(f"Error reading files: {e}")
             raise e
